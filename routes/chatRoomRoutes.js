@@ -3,13 +3,14 @@ const router = express.Router();
 const {
   listRooms,
   createChatRoom,
-  joinRoom,
+  // joinRoom,
   getChatUsers,
 } = require("../controllers/chatRoomController");
+const verifyToken = require("../middlewares/authMiddleware");
 
 router.get("/", listRooms);
 router.get("/:id/users", getChatUsers);
 router.post("/", createChatRoom);
-router.post("/join", joinRoom);
+// router.post("/leave", leaveRoom);
 
 module.exports = router;

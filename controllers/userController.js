@@ -25,4 +25,44 @@ const getUsers = async (req, res) => {
   }
 };
 
-module.exports = { getUser, getUsers };
+const getCurrentUser = async (username) => {
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      throw new Error("User not found");
+    }
+    return user;
+  } catch (error) {
+    return new Error(error.message);
+  }
+};
+
+const getUserById = async (id) => {
+  try {
+    const user = await User.findById(id);
+    return user;
+  } catch (error) {
+    return new Error(error.message);
+  }
+};
+
+const updateUserLastSeen = async (userId, lastSeen) => {
+  try {
+    const user = await User.findById({ _id: userId });
+    if (!user) {
+      throw new Error("User not found");
+    }
+    await User.updateOne({ _id: user._id }, { lastSeen, online: false });
+    return { userId: user._id, username: user.username };
+  } catch (error) {
+    return new Error(error.message);
+  }
+};
+
+module.exports = {
+  getUser,
+  getUsers,
+  getCurrentUser,
+  getUserById,
+  updateUserLastSeen,
+};

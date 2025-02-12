@@ -4,6 +4,7 @@ const http = require("http");
 
 const dotenv = require("dotenv").config();
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 
 const dbConnect = require("./config/dbConnect");
 
@@ -16,14 +17,13 @@ const chatRoutes = require("./routes/chatRoomRoutes");
 const socketConnect = require("./config/socket");
 
 dbConnect();
-// socketConnect(server);
+socketConnect(server);
 
 app.use(express.json());
 app.use(cors());
+app.use(cookieParser());
 
-const botName = "ReedlyChat Bot";
-
-app.use(express.static(path.join(__dirname, "public")));
+// app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/chat", chatRoutes);

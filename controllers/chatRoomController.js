@@ -1,8 +1,10 @@
 const User = require("../models/userModel");
+const Message = require("../models/messageModel");
 const ChatRoom = require("../models/chatRoomModel");
 const listRooms = async (req, res) => {
   try {
     const rooms = await ChatRoom.find();
+    // await rooms.populate({ path: "users", select: "_id username lastSeen" });
     res.status(200).json(rooms);
   } catch (error) {
     res.status(500).json({ message: "Error getting rooms" });
@@ -32,44 +34,121 @@ const createChatRoom = async (req, res) => {
   }
 };
 
-const joinRoom = async (req, res) => {
+const joinRoom = async (userId, roomName) => {
   try {
-    const { roomId, userId } = req.body;
-    const room = await ChatRoom.findById(roomId);
+    const room = await ChatRoom.findOne({ name: roomName });
     if (!room) {
-      return res.status(400).json({ message: "Room not found" });
+      throw new Error("Room not found");
     }
-    const user = await User.findById(userId);
+
+    await User.updateOne({ _id: userId }, { online: true });
+
+    // await room.populate({ path: "users", select: "_id username lastSeen" });
+    const user = await User.findById({ _id: userId });
     if (!user) {
-      return res.status(400).json({ message: "User not found" });
+      throw new Error("User not found");
     }
-    if (room.users.find((user) => user.id === userId)) {
-      return res.status(400).json({ message: "User already in room" });
+    const currentUsers = room.users?.map((cUser) => cUser._id.toString());
+
+    if (currentUsers?.includes(user._id.toString())) {
+      return { roomId: room._id, username: user.username };
+    } else {
+      await ChatRoom.updateOne({ _id: room._id }, { $push: { users: user } });
+      return { roomId: room._id, username: user.username, userId: user._id };
     }
-    await ChatRoom.updateOne({ _id: roomId }, { $push: { users: user } });
-    res.status(201).json({ message: "Joined room successfully" });
+    // await ChatRoom.updateOne({ _id: room._id }, { $push: { users: user } });
+    // res.status(201).json({
+    //   message: "Joined room successfully",
+    //   roomId: room._id,
+    //   username: user.username,
+    // });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ mesage: "Error joining room" });
+    // res.status(500).json({ mesage: "Error joining room" });
+    return new Error(error.message);
   }
 };
 
-const getChatUsers = async (req, res) => {
+const getChatUsers = async (id) => {
   try {
-    const { id } = req.params;
-
-    const room = await ChatRoom.findOne({ _id: id }).populate({
-      path: "users",
-      select: "_id username lastSeen",
-    });
+    const room = await ChatRoom.findOne({ _id: id });
     if (!room) {
-      return res.status(400).json({ message: "Room not found" });
+      // return res.status(400).json({ message: "Room not found" });
+      throw new Error("Room not found.");
     }
-    res.status(200).json(room);
+    await room.populate({
+      path: "users",
+      select: "_id username lastSeen online",
+    });
+    // res.status(200).json(room.users);
+    return room.users;
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Error getting users" });
+    // res.status(500).json({ message: "Error getting users" });
+    return new Error(error.message);
   }
 };
 
-module.exports = { listRooms, createChatRoom, joinRoom, getChatUsers };
+const getRoom = async (name) => {
+  try {
+    const room = await ChatRoom.findOne({ name });
+    if (!room) {
+      throw new Error("Room not found");
+    }
+    return room._id;
+  } catch (error) {
+    console.log(error);
+    return new Error(error.message);
+  }
+};
+
+// when user leaves a room, remove user from room users list and from the user's room list
+//
+
+const leaveRoom = async (userId, roomName) => {
+  try {
+    const room = await ChatRoom.findOne({ name: roomName });
+    if (!room) {
+      throw new Error("Room not found");
+    }
+    const user = await User.findById({ _id: userId });
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const currentUsers = room.users?.map((cUser) => cUser._id.toString());
+
+    if (currentUsers?.includes(user._id.toString())) {
+      await ChatRoom.updateOne(
+        { _id: room._id },
+        { $pull: { users: user._id } }
+      );
+      return { roomId: room._id, username: user.username };
+    } else {
+      throw new Error("User not found");
+    }
+  } catch (error) {
+    console.log(error);
+    throw new Error(error.message);
+  }
+};
+
+const getChatmessages = async (roomId) => {
+  try {
+    const messages = await Message.find({ roomId }).sort({ createdAt: 1 });
+    return messages;
+  } catch (error) {
+    console.log(error);
+    return new Error(error.message);
+  }
+};
+
+module.exports = {
+  listRooms,
+  createChatRoom,
+  joinRoom,
+  getChatUsers,
+  getRoom,
+  leaveRoom,
+  getChatmessages,
+};

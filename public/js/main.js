@@ -1,11 +1,12 @@
 const socket = io();
 const chatForm = document.getElementById("chat-form");
 const chatMessages = document.querySelector(".chat-messages");
+const leaveRoomBtn = document.getElementById("leave-room");
 
 const { username, room } = Qs.parse(location.search, {
   ignoreQueryPrefix: true,
 });
-
+console.log("before joining room", username, room);
 socket.emit("joinRoom", { username, room });
 socket.on("message", (msg) => {
   outputMessage(msg, username);
@@ -21,9 +22,14 @@ socket.on("roomUsers", ({ room, users }) => {
 chatForm.addEventListener("submit", (e) => {
   e.preventDefault();
   const msg = chatForm.querySelector("#msg").value;
-  socket.emit("chatMessage", { username, msg });
+  socket.emit("chatMessage", { username, room, msg });
   chatForm.querySelector("#msg").value = "";
   chatForm.querySelector("#msg").focus();
+});
+
+leaveRoomBtn.addEventListener("click", () => {
+  socket.emit("leaveRoom", username, room);
+  window.location.href = "index.html";
 });
 
 function outputMessage(msg, currentUser) {
@@ -40,7 +46,10 @@ function outputMessage(msg, currentUser) {
 
   const meta = document.createElement("p");
   meta.classList.add("meta");
-  meta.innerHTML = `${msg.username} <span>${msg.time}</span>`;
+  const formattedUsername = senderIsCurrentUser(msg, currentUser)
+    ? "Me"
+    : msg.username.charAt(0).toUpperCase() + msg.username.slice(1);
+  meta.innerHTML = `${formattedUsername} <span>${msg.time}</span>`;
 
   const text = document.createElement("p");
   text.classList.add("text");

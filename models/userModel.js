@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      required: false,
+      required: true,
       unique: true,
       trim: true,
     },
@@ -20,7 +20,11 @@ const userSchema = new mongoose.Schema(
     },
     lastSeen: {
       type: Date,
-      default: Date.now,
+      default: null,
+    },
+    online: {
+      type: Boolean,
+      default: true,
     },
   },
   { timestamps: true }
