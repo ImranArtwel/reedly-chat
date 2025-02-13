@@ -53,7 +53,11 @@ const login = async (req, res) => {
     );
 
     // update online status to true
-    await User.findOneAndUpdate({ _id: user._id }, { online: true });
+    await User.findOneAndUpdate(
+      { _id: user._id },
+      { online: true },
+      { new: true }
+    );
 
     // assign refresh token to http-only cookie
     res.cookie("refreshToken", refreshToken, {

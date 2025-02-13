@@ -52,7 +52,11 @@ const updateUserLastSeen = async (userId, lastSeen) => {
     if (!user) {
       throw new Error("User not found");
     }
-    await User.updateOne({ _id: user._id }, { lastSeen, online: false });
+    await User.updateOne(
+      { _id: user._id },
+      { lastSeen, online: false },
+      { new: true }
+    );
     return { userId: user._id, username: user.username };
   } catch (error) {
     return new Error(error.message);
