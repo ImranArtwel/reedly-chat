@@ -96,19 +96,14 @@ const socketConnect = (server) => {
     });
 
     socket.on("disconnect", async () => {
-      console.log("attempting to disconnect");
-      // setTimeout(async () => {
-      //   if (!socket.connected) {
-      //     const now = Date.now();
-      //     await updateUserLastSeen(userId, now);
+      const now = Date.now();
+      await updateUserLastSeen(userId, now);
 
-      //     socket.broadcast.emit("userStatusUpdate", {
-      //       userId,
-      //       online: false,
-      //       lastSeen: now,
-      //     });
-      //   }
-      // }, 5000); // Wait 5 seconds before marking offline
+      socket.broadcast.emit("userStatusUpdate", {
+        userId,
+        online: false,
+        lastSeen: now,
+      });
     });
   });
 };
