@@ -52,13 +52,16 @@ const login = async (req, res) => {
       }
     );
 
+    // update online status to true
+    await User.findOneAndUpdate({ _id: user._id }, { online: true });
+
     // assign refresh token to http-only cookie
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       sameSite: "None",
       maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
     });
-    // await user.populate({ path: "user", select: "_id username lastSeen" });
+
     res.status(200).json({ token: accessToken, user });
   } catch (error) {
     console.log(error);

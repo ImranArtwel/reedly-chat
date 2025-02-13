@@ -17,7 +17,7 @@ const { createMessage } = require("../controllers/messageController");
 const socketConnect = (server) => {
   const io = socket(server, {
     cors: {
-      origin: "http://localhost:5173",
+      origin: "https://realtimechat-webapp.vercel.app",
       methods: ["GET", "POST"],
       credentials: true,
     },
@@ -90,6 +90,7 @@ const socketConnect = (server) => {
     });
 
     socket.on("disconnect", async () => {
+      console.log("attempting to disconnect");
       setTimeout(async () => {
         if (!socket.connected) {
           const now = Date.now();
