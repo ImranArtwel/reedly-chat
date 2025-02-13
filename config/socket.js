@@ -16,8 +16,10 @@ const { createMessage } = require("../controllers/messageController");
 
 const socketConnect = (server) => {
   const io = socket(server, {
+    pingInterval: 5000, // Sends a ping every 5 seconds
+    pingTimeout: 10000, // Disconnects if no response in 10 seconds
     cors: {
-      origin: "https://realtimechat-webapp.vercel.app",
+      origin: process.env.WEBAPP_URL || "http://localhost:5173",
       methods: ["GET", "POST"],
       credentials: true,
     },
@@ -89,20 +91,24 @@ const socketConnect = (server) => {
       });
     });
 
+    socket.on("browserDisconnect", async () => {
+      console.log("attempting to disconnect");
+    });
+
     socket.on("disconnect", async () => {
       console.log("attempting to disconnect");
-      setTimeout(async () => {
-        if (!socket.connected) {
-          const now = Date.now();
-          await updateUserLastSeen(userId, now);
+      // setTimeout(async () => {
+      //   if (!socket.connected) {
+      //     const now = Date.now();
+      //     await updateUserLastSeen(userId, now);
 
-          socket.broadcast.emit("userStatusUpdate", {
-            userId,
-            online: false,
-            lastSeen: now,
-          });
-        }
-      }, 5000); // Wait 5 seconds before marking offline
+      //     socket.broadcast.emit("userStatusUpdate", {
+      //       userId,
+      //       online: false,
+      //       lastSeen: now,
+      //     });
+      //   }
+      // }, 5000); // Wait 5 seconds before marking offline
     });
   });
 };
